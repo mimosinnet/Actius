@@ -1,7 +1,6 @@
 #!/usr/bin/env perl
 
 # Modules {{{ 
-use Data::Dumper;
 use Text::ParseWords;
 use strict;
 use warnings;

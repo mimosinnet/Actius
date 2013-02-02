@@ -10,11 +10,12 @@ use warnings;
 my @warning;
 my $warning_level = 80;
 my $fulldevice;
+my $hostname = `hostname`;
 my $message = "To: mimosinnet\@gmail.com
 From: mimosinnet\@mimosinnet
 Subject: Perill: disk ple
 
-Missatge de la màquina 'mimosinnet':
+Missatge de la màquina $hostname:
 
 ";
 # }}}
