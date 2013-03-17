@@ -41,7 +41,7 @@ exit if  `ps -C rsync` =~ /rsync/;
 # }}}
 
 # Definition of directories and rsync options {{{
-my @options = ("-abSxnv","--delete");
+my @options = ("-abSx","--delete");
 my $avui =  DateTime->now;
 my $exclude="/home/$usuari/Dades/Sistema/ExclouArxius.txt";
 # }}}
