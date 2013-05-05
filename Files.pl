@@ -11,6 +11,7 @@ die "You must give an argument with the extension you want to view." unless defi
 my $ext = $ARGV[0];
 my %exe = (
 	'pdf'	=> 'mupdf',
+	'PDF'	=> 'mupdf',
 	'txt'	=> 'less',
 	'odt'	=> 'lowriter',
 	'JPG'	=> 'xv',
