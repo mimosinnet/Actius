@@ -16,10 +16,10 @@
 # }}}
 
 # {{{ packages used
-use Net::Ping;
 use warnings;
 use strict;
 use feature qw(say);
+use Net::Ping;
 use FileHandle;
 use LWP::UserAgent;
 # }}}
@@ -32,7 +32,7 @@ my @countries = qw(cn vn);
 # Basic Variable definition {{{
 # Country codes can be obtained from: http://www.ipdeny.com/ipblocks/ 
 my $urls_number = 2 + @countries;			# dshield + bogons + number of countries
-my (@dates_last, @dates_now, @sys);			# We compare stored and present dates
+my (@dates_last, @dates_now);			# We compare stored and present dates
 my $f_dates_last = "/root/data/ipset_dates_last.txt";	# File where dates are stored
 my $hostname 	= `hostname`;
 my $username 	= $ENV{LOGNAME} || $ENV{USER} || getpwuid($<);
@@ -86,10 +86,8 @@ for (@countries) {
 # }}}
 
 # Create ipdeny ipset (storing all other ipsets) and flush {{{
-@sys = ($ipset, qw(create -exist ipdeny list:set));
-system(@sys) == 0 or die "Unable to \"@sys\" at $hostname with username $username because: $?";
-@sys = ($ipset, qw(flush ipdeny));
-system(@sys) == 0 or die "Unable to \"@sys\" at $hostname with username $username because: $?";
+command ($ipset, qw(create -exist ipdeny list:set));
+command ($ipset, qw(flush ipdeny));
 # }}}
 
 # Create sets from the defined data, and return date if new networks found {{{ 
@@ -98,11 +96,10 @@ foreach (@urls) {				# Pass ArrayRef to sub create_ipset
 	push @dates_now, $date_now;
 	my $i = pop(@{$_});
 	if ($sucess) {
-		@sys = (qw(ipset add ipdeny), $i);	# Add defined sets in ipdeny set list
-		system(@sys) == 0 or die "Unable to add $i to global ipdeny set because: $?";
+		command  (qw(ipset add ipdeny), $i);	# Add defined sets in ipdeny set list
 	}
 	else {
-		print "Unable to add $i to global ipdeny set because page did not respond \n\n";
+		say "Unable to add $i to global ipdeny set because page did not respond";
 	}
 } # }}}
 
@@ -119,11 +116,11 @@ command( qw(/etc/init.d/ipset save) );
 # SUB create_ipset: get date_now and create ipset if newer than date_last {{{ 
 sub create_ipset {
 	my ($url,$regex,$date_last,$set_type,$set_name) = @_; 
-	print "$url \n";
+	# say "$url \n";
 	my $request = HTTP::Request->new(GET => $url);
 	my $ua = LWP::UserAgent->new;
 	my $response = $ua->request($request);
-	# check if we can get an answer from the url {{{
+	# check if we can get an answer from the url and create ipset {{{
 	if ($response->is_success) {
 		my $date_now = $response->last_modified;
 		$date_now = time unless defined $date_now;
@@ -142,16 +139,18 @@ sub create_ipset {
 		return ($date_now,1);
 	}	
 	else {
-		print "Unable to open $url \n ";
+		say "Unable to open $url";
 		return ($date_last,0);
 	} # }}}
-}
+} 
+# }}}
 
+# SUB command: execute command {{{
 sub command {
 	my @args = @_;
 	my $command;
-	foreach (@args) { $command .= "$_ " } $command .= "\n";
-	print $command;
+	foreach (@args) { $command .= "$_ " };
+	# say $command; # testing
 	system(@args) == 0 or die "Unable to $command because: $?";
 }
 
