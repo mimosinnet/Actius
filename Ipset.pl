@@ -1,17 +1,19 @@
 #!/usr/bin/env perl
 
+# {{{ Description
 # Perl version of BoneKracker scripts for dynamic list of network blocks
 # (see: http://forums.gentoo.org/viewtopic-t-863121-start-0.html)
 #
 # It:
 # - Downloads from these sites the list of networks that should be blocked
 #		http://feeds.dshield.org/block.txt
-#		http://www.team-cymru.org/Services/Bogons/fullbogons-ipv4.txt
+#		http://www.wizcrafts.net/exploited-servers-iptables-blocklist.html
 #		http://www.ipdeny.com/ipblocks/data/countries/$_.zone 
 # - checks if the downloaded file is newer than what we have
 # - defines the ipset
 # - sets a list of ipset lists, to be able to block all the networks with one iptables command,
 #   like, for example, "iptables -A INPUT -i -lo -p all -m set --match-set ipdeny src -j DROP"
+# }}}
 
 # {{{ packages used
 use Net::Ping;
@@ -22,17 +24,24 @@ use FileHandle;
 use LWP::UserAgent;
 # }}}
 
+# Configurable Variabla definition {{{
+my $ping_host	= "192.168.1.1";
+my @countries = qw(cn vn);
+# }}}
+
 # Basic Variable definition {{{
 # Country codes can be obtained from: http://www.ipdeny.com/ipblocks/ 
-my @countries = qw(cn vn);
 my $urls_number = 2 + @countries;			# dshield + bogons + number of countries
 my (@dates_last, @dates_now, @sys);			# We compare stored and present dates
 my $f_dates_last = "/root/data/ipset_dates_last.txt";	# File where dates are stored
+my $hostname 	= `hostname`;
+my $username 	= $ENV{LOGNAME} || $ENV{USER} || getpwuid($<);
+my $ipset 		= "/usr/sbin/ipset";
 # }}}
 
 # Check if we have connection (ping google.com) {{{
-my $p = Net::Ping->new("icmp");				# 
-$p->ping("google.com") == 1 or die "Unable to ping google.com";
+my $p = Net::Ping->new();
+die "Unable to ping google.com" unless $p->ping($ping_host,"5");
 $p->close();
 # }}}
 
@@ -57,11 +66,11 @@ my @urls = (	# url, regex, stored date, set_type, set_name
 		"block"
 	],
 	[ 
-		"http://www.team-cymru.org/Services/Bogons/fullbogons-ipv4.txt",
+		"http://www.wizcrafts.net/exploited-servers-iptables-blocklist.html",
 		qr/^(\d.*\d)/m,				# 14.102.160.0/19
 		$dates_last[$i++],			# ^^^^^^^^^^^^^^^
 		"hash:net",
-		"bogons"
+		"exploited"
 	]
 );
 for (@countries) {
@@ -77,10 +86,10 @@ for (@countries) {
 # }}}
 
 # Create ipdeny ipset (storing all other ipsets) and flush {{{
-@sys = qw(ipset create -exist ipdeny list:set);
-system(@sys) == 0 or die "Unable to create ipdeny global set because: $?";
-@sys = (qw(ipset flush ipdeny));
-system(@sys) == 0 or die "Unable to flush ipdeny global set because: $?";
+@sys = ($ipset, qw(create -exist ipdeny list:set));
+system(@sys) == 0 or die "Unable to \"@sys\" at $hostname with username $username because: $?";
+@sys = ($ipset, qw(flush ipdeny));
+system(@sys) == 0 or die "Unable to \"@sys\" at $hostname with username $username because: $?";
 # }}}
 
 # Create sets from the defined data, and return date if new networks found {{{ 
@@ -104,36 +113,31 @@ $fh->close;
 # }}}
 
 # Save ipset {{{
-@sys = qw(/etc/init.d/ipset save); 		
-system(@sys) == 0 or die "Unable to save ipsets because $?";
+command( qw(/etc/init.d/ipset save) ); 		
 # }}}
 
 # SUB create_ipset: get date_now and create ipset if newer than date_last {{{ 
 sub create_ipset {
 	my ($url,$regex,$date_last,$set_type,$set_name) = @_; 
+	print "$url \n";
 	my $request = HTTP::Request->new(GET => $url);
 	my $ua = LWP::UserAgent->new;
 	my $response = $ua->request($request);
 	# check if we can get an answer from the url {{{
 	if ($response->is_success) {
 		my $date_now = $response->last_modified;
+		$date_now = time unless defined $date_now;
 		if ($date_now > $date_last) {
-			my @sys = (qw(ipset create), "temp_$set_name", split ' ',$set_type);
-			system(@sys) == 0 or die "Unable to create temp_$set_name of type $set_type, because: $?"; 
+			command ( qw(ipset create), "temp_$set_name", split ' ',$set_type );
 			my $resp = $response->content;
 			while ( $resp =~ /$regex/g ) {	# Set the ipset while there is a regex match
-				@sys = (qw(ipset add), "temp_$set_name", $1);
-				system(@sys) == 0 or die "Unable to add $1 to temp_$set_name, because: $?";
+				command ( qw(ipset add -exist), "temp_$set_name", $1 );
 			}
-			@sys = (qw(ipset create -exist), $set_name, split ' ',$set_type);
-			system(@sys) == 0 or die "Unable to create $set_name of type $set_type, because: $?";
-			@sys = (qw(ipset swap), "temp_$set_name", $set_name);
-			system(@sys) == 0 or die "Unable to swap temp_$set_name with $set_name, because: $?";
-			@sys = (qw(ipset destroy), "temp_$set_name");
-			system(@sys) == 0 or die "Unable to destroy temp_$set_name, because: $?";
+			command (qw(ipset create -exist), $set_name, split ' ',$set_type);
+			command (qw(ipset swap), "temp_$set_name", $set_name);
+			command (qw(ipset destroy), "temp_$set_name");
 			my $cron_notice = "IPSet: $set_name updated (as of: $date_now).";
-			@sys = (qw(logger -p cron.notice), $cron_notice);
-			system(@sys) == 0 or die "Unable to send: $cron_notice to logger, because: $?";
+			command (qw(logger -p cron.notice), $cron_notice);
 			}
 		return ($date_now,1);
 	}	
@@ -141,6 +145,14 @@ sub create_ipset {
 		print "Unable to open $url \n ";
 		return ($date_last,0);
 	} # }}}
+}
+
+sub command {
+	my @args = @_;
+	my $command;
+	foreach (@args) { $command .= "$_ " } $command .= "\n";
+	print $command;
+	system(@args) == 0 or die "Unable to $command because: $?";
 }
 
 # }}}
