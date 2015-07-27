@@ -25,7 +25,7 @@ use LWP::UserAgent;
 # }}}
 
 # Configurable Variabla definition {{{
-my $ping_host	= "192.168.1.1";
+my $ping_host = "158.109.95.220";
 my @countries = qw(cn vn);
 # }}}
 
@@ -40,8 +40,8 @@ my $ipset 		= "/usr/sbin/ipset";
 # }}}
 
 # Check if we have connection (ping google.com) {{{
-my $p = Net::Ping->new();
-die "Unable to ping google.com" unless $p->ping($ping_host,"5");
+my $p = Net::Ping->new("icmp");
+die "Unable to ping $ping_host" unless $p->ping($ping_host,"10");
 $p->close();
 # }}}
 
