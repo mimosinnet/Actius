@@ -1,5 +1,9 @@
 #!/usr/bin/env perl
 
+# Afegir: http://www.team-cymru.org/Services/Bogons/fullbogons-ipv4.txt
+# (no funcionava, però ja funciona)
+
+# {{{ Description
 # Perl version of BoneKracker scripts for dynamic list of network blocks
 # (see: http://forums.gentoo.org/viewtopic-t-863121-start-0.html)
 #
@@ -12,6 +16,7 @@
 # - defines the ipset
 # - sets a list of ipset lists, to be able to block all the networks with one iptables command,
 #   like, for example, "iptables -A INPUT -i -lo -p all -m set --match-set ipdeny src -j DROP"
+# }}}
 
 # {{{ packages used
 use Net::Ping;
@@ -28,10 +33,13 @@ my @countries = qw(cn vn);
 my $urls_number = 2 + @countries;			# dshield + bogons + number of countries
 my (@dates_last, @dates_now, @sys);			# We compare stored and present dates
 my $f_dates_last = "/root/data/ipset_dates_last.txt";	# File where dates are stored
+my $hostname 	= `hostname`;
+my $username 	= $ENV{LOGNAME} || $ENV{USER} || getpwuid($<);
+my $ipset 		= "/usr/sbin/ipset";
 # }}}
 
 # Check if we have connection (ping google.com) {{{
-my $p = Net::Ping->new("icmp");				# 
+my $p = Net::Ping->new("icmp");
 $p->ping("google.com") == 1 or die "Unable to ping google.com";
 $p->close();
 # }}}
@@ -77,10 +85,10 @@ for (@countries) {
 # }}}
 
 # Create ipdeny ipset (storing all other ipsets) and flush {{{
-@sys = qw(ipset create -exist ipdeny list:set);
-system(@sys) == 0 or die "Unable to create ipdeny global set because: $?";
-@sys = (qw(ipset flush ipdeny));
-system(@sys) == 0 or die "Unable to flush ipdeny global set because: $?";
+@sys = ($ipset, qw(create -exist ipdeny list:set));
+system(@sys) == 0 or die "Unable to \"@sys\" at $hostname with username $username because: $?";
+@sys = ($ipset, qw(flush ipdeny));
+system(@sys) == 0 or die "Unable to \"@sys\" at $hostname with username $username because: $?";
 # }}}
 
 # Create sets from the defined data, and return date if new networks found {{{ 

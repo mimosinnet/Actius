@@ -1,55 +1,50 @@
 #!/usr/bin/env perl 
-#===============================================================================
-#
-#         FILE: Vimdiff_Generatech.pl
-#
-#        USAGE: ./Vimdiff.pl  
-#
+# Info {{{
 #  DESCRIPTION: Compare the same file in two different computers
-#
-#      OPTIONS: ---
-# REQUIREMENTS: ---
-#         BUGS: ---
-#        NOTES: ---
-#       AUTHOR: mimosinnet (),
-# ORGANIZATION: Associació Cultural Ningún Lugar
-#      VERSION: 1.0
-#      CREATED: 11/03/13 01:54:24
-#     REVISION: ---
-#===============================================================================
+# }}}
 
+# Use {{{
 use strict;
 use warnings;
-use 5.010;
+no warnings 'experimental::smartmatch';
+use 5.020;
+use FindBin qw($RealBin);
+use lib "$RealBin/lib";
+use Vimdiff_Files;
+use Cwd qw(getcwd);
+# }}}
 
+# Check if file is provided and file exists {{{
 die "Usage: Vimdiff_Generatech 'file' " unless scalar @ARGV == 1; 
-
-my $dir = $ENV{"PWD"};
 my $file = $ARGV[0];
-my $server = "mimosinnet\@generatech//home/mimosinnet/segur";
-my $path;
-
-my $hostname = "mimosinnet";
-
 die "File does not exist" unless -e $file;
+# }}}
 
-if ($dir =~ /^\/home\/mimosinnet/)
-{
-	($path) = $dir =~ /^\/home\/mimosinnet(.*)/;
-	$path = $server . "/o3o_mimosinnet" . $path;
+# Variable Definition {{{
+my $dir = getcwd;
+my $server_dir = "/home/mimosinnet/segur";
+my $server = "generatech";
+my $usuari = "mimosinnet";
+my $port="1666";
+my $path;
+# }}}
+
+my $local_file  = "$dir/$file";
+
+# $remote file path depending on 'mimosinnet' or 'etc'? {{{
+given ($dir) {
+	when (/^\/home\/mimosinnet/)
+		{
+			($path) = $dir =~ /^\/home\/mimosinnet(.*)/;
+			$path   = $server_dir .  "/o3o_mimosinnet" . $path;
+		}
+	when (/^\/etc/)
+		{
+			($path) = $dir =~ /^\/etc(.*)/;
+			$path   = $server_dir .  "/o3o_etc" . $path;
+		}
 }
+my $remote_file = "$path/$file";
+# }}}
 
-my $remote_file = "scp://$path/$file";
-
-my $ssh_test = "ssh generatech -o 'BatchMode=yes' -o 'ConnectionAttempts=1' true";
-my @args;
-
-@args = ("su","-c",$ssh_test,"mimosinnet");
-system (@args) == 0 or die "unable to ssh because of: $?";
-
-say "vimdiff $file $remote_file";
-
-@args = ("vimdiff", $file, $remote_file);
-exec @args;
-
-
+compare_files($local_file,$remote_file,$server,$port);

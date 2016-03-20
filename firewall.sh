@@ -23,7 +23,7 @@ NAT="dynamic"
 		 
 #change this next line so it lists all your network interfaces, including lo
 		 
-INTERFACES="lo eth0 wlan0"
+INTERFACES="lo enp4s0 wlp5s7"
 
 #change this line so that it lists the assigned numbers or symbolic names (from
 #/etc/services) of all the services that you'd like to provide to the general
@@ -31,7 +31,7 @@ INTERFACES="lo eth0 wlan0"
  
 # SERVICES="http ftp smtp ssh rsync"
 # Torrent: 6881:6890
-SERVICES="6890:6999"
+SERVICES="6881:6890"
 
 # UDP ports to open
 # 6881 dht_port for rtorrent

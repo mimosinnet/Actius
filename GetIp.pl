@@ -24,7 +24,7 @@ use utf8;
 use 5.010;
 use LWP::Simple;
 
-# Definition of server {{{
+# Definition of variables {{{
 my $server="generatech";
 my $port="1666";
 my $usuari="mimosinnet";
@@ -32,6 +32,7 @@ my $hostname= qx/'hostname'/;
 chomp $hostname;
 my $from_file = "/tmp/EnviarIP.txt";
 my $to_file = "mimosinnet\@generatech:/home/mimosinnet/IPsOrdinadors/$hostname.txt";
+my ($checkip, $ip);
 # }}}
 
 # Check if we can connect to server {{{
@@ -40,8 +41,8 @@ exit unless (system(@args) == 0);
 # }}}
 
 # Get router ip {{{
-my $checkip = get("http://checkip.dyndns.org");
-my ($ip) = $checkip =~ /((\d+\.){3}\d+)/;
+$checkip = get("http://checkip.dyndns.org");
+($ip) = $checkip =~ /((\d+\.){3}\d+)/;
 #}}}
 
 # Get stored IP {{{
