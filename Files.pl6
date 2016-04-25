@@ -32,14 +32,17 @@ my @extensions = %exe.keys;
 
 # sub main {{{
 sub MAIN($pattern is rw, $ext) {
-	$pattern = "*" if $pattern eq "all";
 	die "The extension '$ext' has not been defined" unless $ext ~~ @extensions.any; 
+	
+	# variables {{{
+	$pattern = "*" if $pattern eq "all";
 	my $program = %exe{$ext};
-	my @files = glob("*$pattern*.$ext").dir;
+	my @files = glob("*$pattern*.$ext");
+	# }}}
 
 	# Read and Delete Files {{{
 	for @files -> $file {
-		my @args = $program, $file.basename;
+		my @args = $program, $file;
 		my $command = run @args;
 		$command.exitcode == 0 or die "system @args failed: $!";
 		my $delete = prompt("\n \n Delete file $file (s/n) ");
