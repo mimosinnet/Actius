@@ -1,9 +1,11 @@
 #!/usr/bin/env perl6
-# Reads files in the form of pattern.extension and asks for deletion
+
+=begin pod
+Reads files in the form of pattern.extension and asks for deletion
+=end pod
 
 # Modules {{{
 use v6;
-use IO::Glob;
 # }}}
 
 # Variables {{{
@@ -33,16 +35,16 @@ my @extensions = %exe.keys;
 # sub main {{{
 sub MAIN($pattern is rw, $ext) {
 	die "The extension '$ext' has not been defined" unless $ext ~~ @extensions.any; 
-	
+
 	# variables {{{
-	$pattern = "*" if $pattern eq "all";
+	$pattern = "" if $pattern eq "all";
 	my $program = %exe{$ext};
-	my @files = glob("*$pattern*.$ext");
+	my @files = '.'.IO.dir(test => /.*$pattern.*\.$ext/);
 	# }}}
 
 	# Read and Delete Files {{{
 	for @files -> $file {
-		my @args = $program, $file;
+		my @args = $program, $file.basename;
 		my $command = run @args;
 		$command.exitcode == 0 or die "system @args failed: $!";
 		my $delete = prompt("\n \n Delete file $file (s/n) ");
@@ -56,7 +58,7 @@ sub MAIN($pattern is rw, $ext) {
 	# }}}
 
 	# Exit and list files {{{
-	@files = glob("*.$ext");
+	@files = '.'.IO.dir(test => /.*$ext$/);
 	say "-" x 60;
 	for @files -> $file {say "$file ";}
 	say "-" x 60;
