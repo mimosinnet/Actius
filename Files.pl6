@@ -33,8 +33,10 @@ my @extensions = %exe.keys;
 # }}}
 
 # sub main {{{
-sub MAIN($pattern is rw, $ext) {
-	die "The extension '$ext' has not been defined" unless $ext ~~ @extensions.any; 
+sub MAIN(
+		$pattern is copy, 
+		Str $ext where { $ext ~~ @extensions.any } 
+	) {
 
 	# variables {{{
 	$pattern = "" if $pattern eq "all";
@@ -68,7 +70,7 @@ sub MAIN($pattern is rw, $ext) {
 
 # sub usage {{{
 sub USAGE () {
-	say "USAGE:\n Files regex/all [ @extensions ]";
+	say "USAGE:\n Files regex/all [ " ~ @extensions ~ " ]";
 }
 # }}}
 
