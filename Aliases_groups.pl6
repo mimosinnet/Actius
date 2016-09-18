@@ -1,12 +1,11 @@
 #!/usr/bin/env perl6
-
-# {{{ Use
-use v6;
-# }}}
-
 # {{{ Description:
 # Reads mutt "alises" from a file and creates new aliases
 # based on the "-group" option
+# }}}
+
+# {{{ Use
+use v6;
 # }}}
 
 # Variables {{{
