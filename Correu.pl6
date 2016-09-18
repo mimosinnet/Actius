@@ -13,7 +13,7 @@ my @comptes = <uab fic master postmaster mimog correu nl_mimosinnet nl_nagore te
 # }}}
 
 
-sub MAIN($compte where { $compte ~~ @comptes.any }  = 'correu' ) {
+sub MAIN(Str $compte where { $compte ~~ @comptes.any }  = 'correu' ) {
 	my $config = "~/.mutt/comptes/$compte";
 
 	my @command = "mutt", "-F", $config;

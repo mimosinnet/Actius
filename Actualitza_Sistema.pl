@@ -17,6 +17,7 @@ use Vimdiff_Files;
 my $hostname = "psicosocial";
 # my $dir		 = "/mnt/toshiba_intel_core_i5";
 my $dir		 = "/mnt/chroot/amdfam10";
+# my $dir		 = "/mnt/chroot/FX-8530";
 my $port 	 = 1964;
 # }}}
 

@@ -12,11 +12,12 @@ use v5.20;
 # Veure què s'ha de fer amb les versions tipus "r1" 
 # Sembla que ara podem isntal·lar versions "r1",
 # S'ha de veure què fem quan estigui instal·lada
-# Fer una funció per agrupar lñes comandes:
+# Fer una funció per agrupar les comandes:
 # my @args - system (@args)
-my $version  = "4.1.15";
+my $version  = "4.4.6";
 my $system   = "gentoo";
-my $revision = "-r1";
+my $revision = "";
+# my $remote   = "/mnt/chroot/FX-8350";
 my $remote   = "/mnt/chroot/amdfam10";
 
 # Atenció: sincronitzar també el /lib/firmware
@@ -115,7 +116,7 @@ $ssh->scp_get(
 system(@args) == 0 or die "system @args failed: $?";
 
 # delete old kernels
-@args = ("emerge", "--prune", "-av", "$package");
+@args = ("emerge", "--prune", "-av", "=$package");
 system(@args) == 0 or die "system @args failed: $?";
 # }}}
 
