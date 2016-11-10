@@ -14,7 +14,7 @@ use v5.20;
 # S'ha de veure què fem quan estigui instal·lada
 # Fer una funció per agrupar les comandes:
 # my @args - system (@args)
-my $version  = "4.4.6";
+my $version  = "4.4.26";
 my $system   = "gentoo";
 my $revision = "";
 # my $remote   = "/mnt/chroot/FX-8350";
