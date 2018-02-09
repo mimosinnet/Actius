@@ -15,7 +15,7 @@ sub MAIN( $pattern is copy, Str $ext ) {
 		last if $delete eq "";
 		next if $delete ne "s";
 		say "mv $file /tmp/$file";
-		IO::Path.new($file).rename("/tmp/$file");
+		$file.IO.rename("/tmp/$file");
 		prompt("\n Press 'return' to continue ");
 	}
 
